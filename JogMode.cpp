@@ -141,6 +141,8 @@ short	lastButtonHit;
 	{
 //		PnpDelay(100);
 	}
+	
+	
 	return(lastButtonHit);
 }
 

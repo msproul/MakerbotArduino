@@ -14,8 +14,9 @@
 //*	Oct 28, 2011	<MLS> Started on Interrupt code
 //*	Nov 12,	2011	<MLS> Adding linear mode for straight line movement
 //*	Nov 17,	2011	<MLS> Added MB2_CalibrateAxis
-//*	Nov 22,	2011	<MLS> Added abilit to flip axis
+//*	Nov 22,	2011	<MLS> Added ability to flip axis direction
 //*	Nov 26,	2011	<MLS> Added MB2_CancelAllMovement
+//*	Nov 28,	2011	<MLS> Linear movement working in all directions
 //******************************************************************************************
 /*
 With direct IO
@@ -34,6 +35,9 @@ Going forward
   Test 4 -X and Y and Z moving loop counter =47375
 
 */
+
+
+
 #if (ARDUINO >= 100)
 	#include <Arduino.h>
 #else
@@ -46,6 +50,8 @@ Going forward
 #include	"MIBdisplayDriver.h"	//*	MIB = MakerBot Interface board
 #include	"LCDdisplayUtils.h"
 
+//#define _USE_ACCELERATION_
+
 #include	"SMD3stepperDriver.h"
 
 #if defined(__AVR__)
@@ -57,10 +63,10 @@ Going forward
 #endif
 
 #if defined(__PIC32MX__)
-
 	#define ENABLE_STEPPER_DRIVER_INTERRUPT()
 	#define DISABLE_STEPPER_DRIVER_INTERRUPT()
 #endif
+
 
 
 //															 12345679 123456
@@ -106,7 +112,7 @@ typedef struct
 		short				stepsAtThisRate;
 	#endif
 
-	#ifdef _USE_DIRECT_PORT_IO_
+	#if defined(_USE_DIRECT_PORT_IO_) && defined(__AVR__)
 		//*	this allows to bypass digitalWrite delays but not loose compatibilty
 		uint8_t				enablePin_bitMask;
 		volatile uint8_t	*enablePin_out;
@@ -119,6 +125,8 @@ typedef struct
 
 		uint8_t				endStopMaxPin_bitMask;
 		volatile uint8_t	*endStopMaxPin_inReg;
+	#elif defined(_USE_DIRECT_PORT_IO_) && defined(__PIC32MX__)
+	
 	#endif
 	} TYPE_Stepper;
 
@@ -359,6 +367,8 @@ uint8_t oldSREG;
 
 	if (gStepper[kMB2_StepperY].desiredLocation != gStepper[kMB2_StepperY].currentLocation)
 	{
+		forwardDirState	=	gStepper[kMB2_StepperY].forwardDirValue;
+		reverseDirState	=	gStepper[kMB2_StepperY].reverseDirValue;
 
 		gStepper[kMB2_StepperY].isActive	=	true;
 		if (gStepper[kMB2_StepperY].desiredLocation < gStepper[kMB2_StepperY].currentLocation)
@@ -382,13 +392,13 @@ uint8_t oldSREG;
 
 	gStepper[kMB2_StepperX].accumulatedError	=	0;
 	gStepper[kMB2_StepperY].accumulatedError	=	0;
+
 	//*	we only have to worry about it if both deltas are none zero
 	//*	also, we dont have to worry about direction since that was already set above, we can assume positive (i.e. left to right, bottom to top)
 	if ((deltaX != 0) && (deltaY != 0))
 	{
 		gStepper[kMB2_StepperX].isLinear	=	true;
 		gStepper[kMB2_StepperY].isLinear	=	true;
-
 
 		if (deltaX >= deltaY)
 		{
@@ -930,7 +940,7 @@ boolean	okToStep;
 		if (stepperX->isActive || stepperY->isActive)
 		{
 			//*	we are going to do them together
-			if (stepperX->currentStepPinState)
+			if ((stepperX->currentStepPinState) || (stepperY->currentStepPinState))
 			{
 				//*	its high, set it BOTH x and Y low
 			#ifdef _USE_DIRECT_PORT_IO_
@@ -1029,11 +1039,73 @@ boolean	okToStep;
 
 						}
 					}
-				}
-				if (gStepper[kMB2_StepperX].currentLocation == gStepper[kMB2_StepperX].desiredLocation)
-				{
-					gStepper[kMB2_StepperX].isActive	=	false;
-					gStepper[kMB2_StepperY].isActive	=	false;
+					else if (stepperY->isPrimary)
+					{
+						//*	stepper Y is primary
+
+						//*	move Y
+						//*	if its currently low, set it HIGH
+					#ifdef _USE_DIRECT_PORT_IO_
+						*stepperY->stepPin_out	|=	stepperY->stepPin_bitMask;
+					#else
+						digitalWrite(stepperY->stepPin, HIGH);
+					#endif
+						stepperY->currentStepPinState	=	HIGH;	
+
+						//*	update the position, the A3977 does the step on the LOW to HIGH transition
+						if (stepperY->currentDirection == kStepperForward)
+						{
+							stepperY->currentLocation++;
+						}
+						else
+						{
+							stepperY->currentLocation--;
+						}
+					
+					
+						//*	now figure out if we need to move X
+						stepperX->accumulatedError	+=	stepperX->delta;
+						if (stepperX->accumulatedError > stepperY->delta)
+						{
+							stepperX->accumulatedError	-=	stepperY->delta;
+
+						#ifdef _USE_DIRECT_PORT_IO_
+							*stepperX->stepPin_out	|=	stepperX->stepPin_bitMask;
+						#else
+							digitalWrite(stepperX->stepPin, HIGH);
+						#endif
+							stepperX->currentStepPinState	=	HIGH;	
+
+							//*	update the position, the A3977 does the step on the LOW to HIGH transition
+							if (stepperX->currentDirection == kStepperForward)
+							{
+								stepperX->currentLocation++;
+							}
+							else
+							{
+								stepperX->currentLocation--;
+							}
+						}
+					}
+					
+					
+					if (gStepper[kMB2_StepperX].currentLocation == gStepper[kMB2_StepperX].desiredLocation)
+					{
+						gStepper[kMB2_StepperX].isActive	=	false;
+						gStepper[kMB2_StepperX].isLinear	=	false;
+						
+						//*	leave the other axis in case it has one more step to go
+						gStepper[kMB2_StepperY].isLinear	=	false;
+					}
+
+					if (gStepper[kMB2_StepperY].currentLocation == gStepper[kMB2_StepperY].desiredLocation)
+					{
+						gStepper[kMB2_StepperY].isActive	=	false;
+						gStepper[kMB2_StepperY].isLinear	=	false;
+
+						//*	leave the other axis in case it has one more step to go
+						gStepper[kMB2_StepperX].isLinear	=	false;
+					}
 				}
 			}
 		}

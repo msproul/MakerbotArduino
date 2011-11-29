@@ -62,8 +62,9 @@
 //******************************************************************************************
 
 boolean			gSteppersNeedCalibrated;
-short			gWhichHelpMsg	=	0;
-boolean			gStateFirstTime	=	false;;
+short			gWhichHelpMsg;
+boolean			gStateFirstTime;
+int				gMenuCount;
 
 
 //*	the MIBdisplayDriver library provides the abilty to display a menu, handle that menu
@@ -103,7 +104,6 @@ TYPE_MenuDef gMainMenu[] PROGMEM =
 
 	{	-1,						"-"}
 };
-#define	kMenuCount	5
 
 
 //******************************************************************************************
@@ -181,6 +181,7 @@ int	ii;
 	MIB_Init();
 
 	MIB_SysBeep(1);
+	gMenuCount	=	MIB_CountMenuItems(gMainMenu);
 
 
 
@@ -198,7 +199,7 @@ int	ii;
 
 #ifdef _DEBUG_
 	//*	dump the menu out the serial port
-	MIB_DumpMenu(gMainMenu, kMenuCount);
+	MIB_DumpMenu(gMainMenu, gMenuCount);
 #endif
 
 	LCDdisplay_Info(gPgmNameString, gVersionString, gCPU_Platform, gTextMsg_GCC_DATE_STR);
@@ -240,7 +241,7 @@ short	previousState;
 	switch(gMIBcurrentState)
 	{
 		case kState_Idle:
-			myUpdateMenu	=	MIB_ProcessMenuButtons(gMainMenu, kMenuCount);
+			myUpdateMenu	=	MIB_ProcessMenuButtons(gMainMenu, gMenuCount);
 			if (myUpdateMenu)
 			{
 				//*	done this way so other routines can force menu update

@@ -43,6 +43,7 @@ extern "C"{
 #endif
 
 void	MB2_InitAllSteppers(void);
+void	MB2_EnableAllSteppers(void);
 void	MB2_DisableAllSteppers(void);
 long	MB2_GetCurrentStepperLocation(short stepperNumber);
 long	MB2_GetCurrentStepperDelta(short stepperNumber);

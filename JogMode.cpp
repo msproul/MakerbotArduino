@@ -35,7 +35,7 @@
 
 
 
-#define	kJogDeltaSteps	20
+#define	kJogDeltaSteps	10
 //******************************************************************************************
 //*	this brings up a display on the LCD screen and allows the user to move the head in x,y,z by using
 //*	the buttons on the control panel
@@ -129,7 +129,7 @@ short	lastButtonHit;
 
 	if (((millis() - gLastLCDupdateTime) > 200) || gMIBupdateLCDscreen)
 	{
-		LCDdisplay_XYZposition(true, title);
+		LCDdisplay_XYZposition(false, title);
 		LCDdisplay_EndStops(1, kMB2_Limit_XMin, kMB2_Limit_XMax);	//*	line 2 of the LCD screen 
 		LCDdisplay_EndStops(2, kMB2_Limit_YMin, kMB2_Limit_YMax);
 		LCDdisplay_EndStops(3, kMB2_Limit_ZMin, kMB2_Limit_ZMax);
@@ -139,7 +139,7 @@ short	lastButtonHit;
 	}
 	if (changeOccured)
 	{
-//		PnpDelay(100);
+//		delay(5);
 	}
 	
 	
@@ -156,5 +156,11 @@ short	lastButtonHit;
 	if ((lastButtonHit == kMIB_Button_OK_Sel) || (lastButtonHit == kMIB_Button_Cancel))
 	{
 		MIB_SetToMainMenu();
+	}
+	else if (lastButtonHit == kMIB_Button_Zero)
+	{
+		MB2_SetCurrentStepperLocation(kMB2_StepperX, 0);
+		MB2_SetCurrentStepperLocation(kMB2_StepperY, 0);
+		MB2_SetCurrentStepperLocation(kMB2_StepperZ, 0);
 	}
 }

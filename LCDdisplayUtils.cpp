@@ -77,6 +77,14 @@ short	lcdRowNum;
 
 }
 
+//******************************************************************************************
+void	LCDdisplay_PrintRightJustified(long theNumber)
+{
+char	numstring[10];
+
+	sprintf(numstring, "%6ld ", theNumber);
+	LCD.print(numstring);
+}
 
 
 //******************************************************************************************
@@ -98,17 +106,17 @@ short	lcdRowNum;
 	lcdRowNum++;
 	LCD.setCursor(0, lcdRowNum);
 	LCD_print_P(gXlabelString);
-	LCD.print(MB2_GetCurrentStepperLocation(kMB2_StepperX));
+	LCDdisplay_PrintRightJustified(MB2_GetCurrentStepperLocation(kMB2_StepperX));
 
 	lcdRowNum++;
 	LCD.setCursor(0, lcdRowNum);
 	LCD_print_P(gYlabelString);
-	LCD.print(MB2_GetCurrentStepperLocation(kMB2_StepperY));
+	LCDdisplay_PrintRightJustified(MB2_GetCurrentStepperLocation(kMB2_StepperY));
 
 	lcdRowNum++;
 	LCD.setCursor(0, lcdRowNum);
 	LCD_print_P(gZlabelString);
-	LCD.print(MB2_GetCurrentStepperLocation(kMB2_StepperZ));
+	LCDdisplay_PrintRightJustified(MB2_GetCurrentStepperLocation(kMB2_StepperZ));
 	lcdRowNum++;
 }
 

@@ -17,6 +17,7 @@
 //*	Nov 22,	2011	<MLS> Added ability to flip axis direction
 //*	Nov 26,	2011	<MLS> Added MB2_CancelAllMovement
 //*	Nov 28,	2011	<MLS> Linear movement working in all directions
+//*	Dec  2,	2011	<MLS> Added MB2_EnableAllSteppers
 //******************************************************************************************
 /*
 With direct IO
@@ -204,6 +205,19 @@ short	ii;
 
 
 }
+
+//******************************************************************************************
+void	MB2_EnableAllSteppers(void)
+{
+int	ii;
+
+	for (ii=0; ii<kMB2_MaxSteppers; ii++)
+	{
+		digitalWrite(gStepper[ii].enablePin,		LOW);	//*	enable the motor
+	}
+	
+}
+
 
 //******************************************************************************************
 void	MB2_DisableAllSteppers(void)

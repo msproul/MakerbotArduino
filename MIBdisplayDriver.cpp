@@ -92,7 +92,11 @@ short	ii;
 	gMIBcurrentMenuOffset	=	0;
 
 	LCD.begin(16, 4);
-	
+#ifdef _SETROWOFFSET_SUPPORTED_	
+	LCD.setRowOffsets(0x00, 0x40, 0x10, 0x50);
+#else
+	#warning make sure the LiquidCrystal.cpp is modified
+#endif
 	//*	make the interface board switch pins inputs
 	pinMode(kMIB_Switch_Pin_OK,		INPUT);
 	pinMode(kMIB_Switch_Pin_Cancel,	INPUT);

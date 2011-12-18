@@ -31,6 +31,7 @@ void	LCD_print_P(const char *stringPtr);
 void	LCDdisplay_Info(const char *line1, const char *line2a, const char *line2b, const char *line3);
 void	LCDdisplay_XYZposition(boolean eraseScreen, const char *titleProgMem);
 void	LCDdisplay_EndStops(short lcdRow, short minPin, short maxPin);
+void	LCDdisplay_PrintRightJustified(long theNumber);
 
 #ifdef __cplusplus
 } // extern "C"

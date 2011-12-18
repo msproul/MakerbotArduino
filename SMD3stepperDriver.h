@@ -55,6 +55,7 @@ void	MB2_CancelMove(short stepperNumber);
 void	MB2_CancelAllMovement(void);
 int		MB2_GetEndStopMin(short stepperNumber);
 int		MB2_GetEndStopMax(short stepperNumber);
+boolean	MB2_CheckXYZendStops(void);
 boolean	MB2_StepperIsActive(void);
 boolean	MB2_AxisIsActive(short stepperNumber);
 boolean	MB2_CalibrateAxis(short stepperNumber, short lcdRowNum, const char *axisName);

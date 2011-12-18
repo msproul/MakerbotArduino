@@ -77,9 +77,9 @@ enum {
 		kState_Help,
 		kState_Info,
 		kState_Home,
+		kState_JOG,
 		kState_Calibrate,
 		kState_ShowSDfiles,
-		kState_JOG,
 		kState_SetSpeed,
 		
 		
@@ -97,9 +97,9 @@ TYPE_MenuDef gMainMenu[] PROGMEM =
 	{	kState_Help,				"Help"},
 	{	kState_Info,				"Info"},
 	{	kState_Home,				"Home"},
-	{	kState_ShowSDfiles,			"Show SD files"},
-	{	kState_Calibrate,			"Calibrate"},
 	{	kState_JOG,					"Jog"},
+	{	kState_Calibrate,			"Calibrate"},
+	{	kState_ShowSDfiles,			"Show SD files"},
 	{	kState_SetSpeed,			"Set Speed"},
 
 	{	-1,						"-"}
@@ -287,31 +287,7 @@ short	previousState;
 			break;
 
 		case kState_Home:
-			LCDdisplay_XYZposition(true, gTextGoingHome);
-			LCDdisplay_EndStops(1, kMB2_Limit_XMin, kMB2_Limit_XMax);	//*	line 2 of the LCD screen 
-			LCDdisplay_EndStops(2, kMB2_Limit_YMin, kMB2_Limit_YMax);
-			LCDdisplay_EndStops(3, kMB2_Limit_ZMin, kMB2_Limit_ZMax);
-			delay(250);
-
-			//*	check to see if the user cancelled
-			if (MIB_IsCancelDown())
-			{
-				//*	its been canceled, set the desired location to be the current location
-				MB2_CancelMove(kMB2_StepperX);
-				MB2_CancelMove(kMB2_StepperY);
-				MB2_CancelMove(kMB2_StepperZ);
-				MB2_CancelMove(kMB2_StepperB);
-				LCD.setCursor(0, 0);
-				LCD_print_P(gTextCanceled);
-				delay(2000);
-				MIB_SetToMainMenu();
-			}
-			else if (!MB2_StepperIsActive())
-			{
-				LCDdisplay_XYZposition(true, gTextGoingHome);
-				delay(1000);
-				MIB_SetToMainMenu();
-			}
+			GoHome();
 			break;
 			
 		case kState_Calibrate:
@@ -360,6 +336,71 @@ void StateMachineFirstTime(short theNewState)
 	}
 }
 
+//******************************************************************************************
+void	GoHome(void)
+{
+long	currentLocation;
+
+	LCDdisplay_XYZposition(true, gTextGoingHome);
+	LCDdisplay_EndStops(1, kMB2_Limit_XMin, kMB2_Limit_XMax);	//*	line 2 of the LCD screen 
+	LCDdisplay_EndStops(2, kMB2_Limit_YMin, kMB2_Limit_YMax);
+	LCDdisplay_EndStops(3, kMB2_Limit_ZMin, kMB2_Limit_ZMax);
+
+	//*	move X axis
+	if (MB2_GetEndStopMin(kMB2_StepperX) == HIGH)
+	{
+		currentLocation	=	MB2_GetCurrentStepperLocation(kMB2_StepperX);
+		MB2_StepperMoveToLocation(kMB2_StepperX, currentLocation - 100);
+	}
+	else
+	{
+		//*	we got to the endstop but arent there yet, fix it
+		MB2_SetCurrentStepperLocation(kMB2_StepperX, 0);
+	}
+
+	//*	move Y axis
+	if (MB2_GetEndStopMin(kMB2_StepperY) == HIGH)
+	{
+		currentLocation	=	MB2_GetCurrentStepperLocation(kMB2_StepperY);
+		MB2_StepperMoveToLocation(kMB2_StepperY, currentLocation - 100);
+	}
+	else
+	{
+		//*	we got to the endstop but arent there yet, fix it
+		MB2_SetCurrentStepperLocation(kMB2_StepperY, 0);
+	}
+
+	//*	move Z axis
+	if (MB2_GetEndStopMax(kMB2_StepperZ) == HIGH)
+	{
+		currentLocation	=	MB2_GetCurrentStepperLocation(kMB2_StepperZ);
+		MB2_StepperMoveToLocation(kMB2_StepperZ, currentLocation + 100);
+	}
+	else
+	{
+		//*	we got to the endstop but arent there yet, fix it
+		MB2_SetCurrentStepperLocation(kMB2_StepperZ, 0);
+	}
+
+	//*	check to see if the user cancelled
+	if (MIB_IsCancelDown())
+	{
+		//*	its been canceled,
+		MB2_CancelAllMovement();
+
+		LCD.setCursor(0, 0);
+		LCD_print_P(gTextCanceled);
+		delay(2000);
+		MIB_SetToMainMenu();
+	}
+	else if (!MB2_StepperIsActive())
+	{
+		LCDdisplay_XYZposition(true, gTextGoingHome);
+		delay(1000);
+		MIB_SetToMainMenu();
+	}
+	delay(250);
+}
 
 
 #define	kDeltaORC1	100

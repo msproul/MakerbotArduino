@@ -16,7 +16,7 @@
 //*	Nov 17,	2011	<MLS> Added MB2_CalibrateAxis
 //*	Nov 22,	2011	<MLS> Added ability to flip axis direction
 //*	Nov 26,	2011	<MLS> Added MB2_CancelAllMovement
-//*	Nov 28,	2011	<MLS> Linear movement working in all directions
+//*	Nov 28,	2011	<MLS> Linear movement working in all directions (X,Y only, no Z)
 //*	Dec  2,	2011	<MLS> Added MB2_EnableAllSteppers
 //******************************************************************************************
 /*
@@ -536,7 +536,40 @@ int	MB2_GetEndStopMax(short stepperNumber)
 #endif
 }
 
+//******************************************************************************************
+//*	returns TRUE if any endstops are hit
+boolean	MB2_CheckXYZendStops(void)
+{
+boolean	endStopHit;
+int		ii;
 
+	endStopHit	=	false;
+	for (ii=0; ii<=kMB2_StepperZ; ii++)
+	{
+		if (MB2_AxisIsActive(ii))
+		{
+			//*	if the axis active, check for end stops	
+
+			//*	check for direction of movement
+			if (gStepper[ii].currentLocation < gStepper[ii].desiredLocation)
+			{
+				if (MB2_GetEndStopMax(ii) == LOW)
+				{
+					endStopHit	=	true;
+				}
+			}
+			if (gStepper[ii].currentLocation > gStepper[ii].desiredLocation)
+			{
+				if (MB2_GetEndStopMin(ii) == LOW)
+				{
+					endStopHit	=	true;
+				}
+			}
+		}
+	}
+	
+	return(endStopHit);
+}
 //******************************************************************************************
 //*	CalibrateAxis will move the stepper to "left" until the minimum is hit 
 //*		and then to the "right" until max is hit
@@ -555,6 +588,7 @@ long	deltaSteps;
 short	myMinStopPin;
 short	myMaxStopPin;
 
+//	Serial.println("MB2_CalibrateAxis");
 
 	minReached	=	false;
 	maxReached	=	false;
@@ -592,10 +626,11 @@ short	myMaxStopPin;
 			
 			if ((loopCounter % 50) == 0)
 			{
-				LCD.setCursor(0, lcdRowNum);
-				LCD_print_P(axisName);
-				LCD.print(MB2_GetCurrentStepperLocation(stepperNumber));
-				LCDdisplay_EndStops(lcdRowNum, myMinStopPin, myMaxStopPin);	//*	line 2 of the LCD screen 
+				LCDdisplay_XYZposition(false, gCalibrateString);
+			//	LCD.setCursor(0, lcdRowNum);
+			//	LCD_print_P(axisName);
+			//	LCD.print(MB2_GetCurrentStepperLocation(stepperNumber));
+				LCDdisplay_EndStops(lcdRowNum, myMinStopPin, myMaxStopPin);	//*	only display the line we are currently working on 
 			}
 			
 			loopCounter++;
@@ -637,9 +672,10 @@ short	myMaxStopPin;
 			
 			if ((loopCounter % 50) == 0)
 			{
-				LCD.setCursor(0, lcdRowNum);
-				LCD_print_P(axisName);
-				LCD.print(MB2_GetCurrentStepperLocation(stepperNumber));
+				LCDdisplay_XYZposition(false, gCalibrateString);
+			//	LCD.setCursor(0, lcdRowNum);
+			//	LCD_print_P(axisName);
+			//	LCD.print(MB2_GetCurrentStepperLocation(stepperNumber));
 				LCDdisplay_EndStops(lcdRowNum, myMinStopPin, myMaxStopPin);	//*	line 2 of the LCD screen 
 			}
 			

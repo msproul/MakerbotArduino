@@ -23,6 +23,7 @@ extern "C"{
 void	InitSDcard(void);
 short	ReadOneLineFromFile(File *myFile, char *lineBuffer, short maxLineLen);
 short	CountLinesInFile(char *theFileName);
+void	DumpFileToSerialPort(char *theFileName);
 
 
 #ifdef __cplusplus

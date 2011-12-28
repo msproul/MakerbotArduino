@@ -18,6 +18,7 @@
 //*	Nov 26,	2011	<MLS> Added MB2_CancelAllMovement
 //*	Nov 28,	2011	<MLS> Linear movement working in all directions (X,Y only, no Z)
 //*	Dec  2,	2011	<MLS> Added MB2_EnableAllSteppers
+//*	Dec 17,	2011	<MLS> Added MB2_CheckXYZendStops
 //******************************************************************************************
 /*
 With direct IO
@@ -537,7 +538,7 @@ int	MB2_GetEndStopMax(short stepperNumber)
 }
 
 //******************************************************************************************
-//*	returns TRUE if any endstops are hit
+//*	returns TRUE if any endstops are hit in the DIRECTION OF TRAVEL!!
 boolean	MB2_CheckXYZendStops(void)
 {
 boolean	endStopHit;
@@ -551,15 +552,17 @@ int		ii;
 			//*	if the axis active, check for end stops	
 
 			//*	check for direction of movement
-			if (gStepper[ii].currentLocation < gStepper[ii].desiredLocation)
+			if (gStepper[ii].desiredLocation > gStepper[ii].currentLocation)
 			{
+				//*	we are going POSITIVE direction, check MAX endstop
 				if (MB2_GetEndStopMax(ii) == LOW)
 				{
 					endStopHit	=	true;
 				}
 			}
-			if (gStepper[ii].currentLocation > gStepper[ii].desiredLocation)
+			if (gStepper[ii].desiredLocation < gStepper[ii].currentLocation)
 			{
+				//*	we are going in a NEGATIVE direction, check MIN endstop
 				if (MB2_GetEndStopMin(ii) == LOW)
 				{
 					endStopHit	=	true;

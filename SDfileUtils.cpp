@@ -6,6 +6,7 @@
 //*	Edit History
 //******************************************************************************************
 //*	Nov  1,	2011	<MLS> Started working on SD file utilities
+//*	Dec 18,	2011	<MLS> Added DumpFileToSerialPort
 //******************************************************************************************
 
 
@@ -103,3 +104,23 @@ char	lineBuffer[80];
 	return(lineCount);
 }
 
+
+//******************************************************************************************
+void	DumpFileToSerialPort(char *theFileName)
+{
+File	theFileDesc;
+char	lineBuffer[80];
+
+	InitSDcard();
+
+	theFileDesc	=	SD.open(theFileName);
+	if (theFileDesc)
+	{
+		while (theFileDesc.available())
+		{
+			ReadOneLineFromFile(&theFileDesc, lineBuffer, 79);
+			Serial.println(lineBuffer);
+		}
+		theFileDesc.close();			// close the file
+	}
+}
